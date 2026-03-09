@@ -1,21 +1,19 @@
 (ns pickgen.handlers.home.model
   (:require
-   [pickgen.models.crud :refer [db Query Update]]))
+   [pickgen.models.crud :refer [db Query Save]]))
 
 (defn get-user
   [username]
-  (Query db ["SELECT * FROM users WHERE username=?" username]))
+  (first (Query ["SELECT * FROM users WHERE username=?" username])))
 
 (defn get-users
   []
-  (Query db ["SELECT * FROM users"]))
+  (Query ["SELECT * FROM users"]))
 
 (defn update-password
   [username password]
-  (let [where-clause ["username = ?" username]
-        result (first (Update db :users {:password password} where-clause))]
-    (Integer. result)))
+  (Save :users {:password password} ["username = ?" username]))
 
 (comment
-  (get-user "sistema@gmail.com")
+  (get-user "system@gmail.com")
   (get-users))
