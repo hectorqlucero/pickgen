@@ -6,7 +6,8 @@
    See: HOOKS_GUIDE.md for detailed documentation and examples.
    Example: src/pickgen/hooks/alquileres.clj
    
-   Uncomment the hooks you need and implement the logic.")
+   Uncomment the hooks you need and implement the logic."
+  (:require [pickgen.models.util :refer [image-link]]))
 
 ;; =============================================================================
 ;; Validators
@@ -63,9 +64,11 @@
    Args: [rows params] - Loaded rows and query params
    Returns: Modified rows vector"
   [rows params]
-  ;; TODO: Add your logic here
   (println "[INFO] Loaded" (count rows) "users record(s)")
-  rows)
+  ;; Transform file fields to image links
+  (map #(-> %
+            (assoc :imagen (image-link (:imagen %)))
+        ) rows))
 
 (defn before-save
   "Hook executed before saving a record.
@@ -79,14 +82,19 @@
    Args: [params] - Form data to be saved
    Returns: Modified params map OR {:errors {...}} if validation fails"
   [params]
-  ;; TODO: Add validation and transformation logic
-  ;; Example:
-  ;; (if-let [errors (validate-dates params)]
-  ;;   {:errors errors}
-  ;;   (assoc params :status "active"))
-  
   (println "[INFO] Saving users...")
-  params)
+
+  ;; Handle file upload for imagen field
+  ;; The system expects :file key, but our field is named :imagen
+  (if-let [file-data (:imagen params)]
+    (if (and (map? file-data) (:tempfile file-data))
+      ;; It's a file upload - move it to :file key so build-form-save finds it
+      (-> params
+          (assoc :file file-data)
+          (dissoc :imagen))
+      ;; It's already a string (existing filename) - keep as is
+      params)
+    params))
 
 (defn after-save
   "Hook executed after successfully saving a record.

@@ -970,7 +970,16 @@
   [& args]
   (if (empty? args)
     (print-usage)
-    (let [args-vec (vec args)
+    ;; Normalize: strip bare "--" separators, treat "all"→"--all", "force"→"--force"
+    (let [normalized (map (fn [a]
+                            (case a
+                              "--"    nil
+                              "all"   "--all"
+                              "force" "--force"
+                              a))
+                          args)
+          args (remove nil? normalized)
+          args-vec (vec args)
           all? (some #{"--all"} args)
           force? (some #{"--force"} args)
           with-hooks? (not (some #{"--no-hooks"} args))
