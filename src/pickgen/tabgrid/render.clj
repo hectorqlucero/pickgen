@@ -1,9 +1,18 @@
 (ns pickgen.tabgrid.render
   "Clean TabGrid rendering - pure UI generation"
   (:require
+   [clojure.string :as str]
    [pickgen.i18n.core :as i18n]
    [hiccup.util :refer [raw-string]]
    [pickgen.engine.config :as config]))
+
+(defn- format-cell
+  "Format a cell value for display. Joins vectors with comma+space."
+  [v]
+  (cond
+    (vector? v) (str/join ", " v)
+    (sequential? v) (str/join ", " v)
+    :else v))
 
 (defn- safe-id [s]
   "Convert string to safe HTML ID"
@@ -28,9 +37,10 @@
                                 value)]
            [:tr
             [:th.bg-light.text-uppercase.fw-semibold {:style "width: 30%"} field-label]
-            [:td (if (and (string? computed-value) (re-find #"^<" computed-value))
-                   (raw-string computed-value)
-                   computed-value)]]))
+            [:td (let [v (format-cell computed-value)]
+                   (if (and (string? v) (re-find #"^<" v))
+                     (raw-string v)
+                     v))]]))
        [:tr
         [:th.bg-light.text-uppercase.fw-semibold (i18n/tr request :common/actions)]
         [:td

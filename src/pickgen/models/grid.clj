@@ -3,6 +3,14 @@
    [clojure.string :as st]
    [pickgen.i18n.core :as i18n]))
 
+(defn format-cell
+  "Format a cell value for display. Joins vectors with comma+space."
+  [v]
+  (cond
+    (vector? v) (st/join ", " v)
+    (sequential? v) (st/join ", " v)
+    :else v))
+
 (defn build-grid-head
   [request href fields & args]
   (let [args (first args)
@@ -55,7 +63,7 @@
          [:tr
           (for [field fields]
             [:td.text-truncate.align-middle
-             ((key field) row)])
+             (format-cell ((key field) row))])
           [:td.text-center.align-middle
            {:style "width:1%; white-space:nowrap; padding-left:0.25rem; padding-right:0.25rem;"}
            [:div.d-flex.justify-content-center.align-items-center.gap-2
@@ -122,7 +130,7 @@
      [:tr
       (for [field fields]
         [:td.text-truncate.align-middle
-         ((key field) row)])])])
+         (format-cell ((key field) row))])])])
 
 ;; --- Unified Grid ---
 (defn build-grid
@@ -246,7 +254,7 @@
   (let [{:keys [title table-name parent-entity href icon label]} subgrid-config
         parent-id (get parent-record (keyword (:primary-key subgrid-config "id")))
         subgrid-url (str href "?parent_id=" parent-id
-                        (when parent-entity (str "&parent_entity=" parent-entity)))]
+                         (when parent-entity (str "&parent_entity=" parent-entity)))]
     [:button.btn.btn-info.btn-sm.me-1
      {:type "button"
       :data-subgrid-url subgrid-url
@@ -276,33 +284,33 @@
         (for [subgrid-config subgrid-configs]
           (build-subgrid-trigger row subgrid-config))
         ;; Original action buttons
-(let [edit (:edit args)
-               delete (:delete args)]
-           ;; Edit button
-           (let [disabled? (not edit)]
-             [:a.btn.btn-warning.btn-sm.fw-semibold.shadow-sm.rounded-pill.edit-record-btn
-              (merge
-               {:href "#"
-                :tabindex (when disabled? -1)
-                :aria-disabled (when disabled? "true")
-                :class (str "btn btn-warning btn-sm fw-semibold shadow-sm.rounded-pill edit-record-btn"
-                            (when disabled? " disabled"))}
-               (when-not disabled?
-                 {:data-url (str href "/edit-form/" (:id row))
-                  :data-bs-toggle "modal"
-                  :data-bs-target "#exampleModal"}))
-              [:i.bi.bi-pencil.me-1]
-              (i18n/tr request :common/edit)])
-           ;; Delete button
-           (let [disabled? (not delete)]
-             [:a.btn.btn-danger.btn-sm.fw-semibold.shadow-sm.rounded-pill
-              {:href (str href "/delete/" (:id row))
+        (let [edit (:edit args)
+              delete (:delete args)]
+          ;; Edit button
+          (let [disabled? (not edit)]
+            [:a.btn.btn-warning.btn-sm.fw-semibold.shadow-sm.rounded-pill.edit-record-btn
+             (merge
+              {:href "#"
                :tabindex (when disabled? -1)
                :aria-disabled (when disabled? "true")
-               :class (str "btn btn-danger btn-sm fw-semibold shadow-sm.rounded-pill"
+               :class (str "btn btn-warning btn-sm fw-semibold shadow-sm.rounded-pill edit-record-btn"
                            (when disabled? " disabled"))}
-              [:i.bi.bi-trash.me-1]
-              (i18n/tr request :common/delete)]))]]])])
+              (when-not disabled?
+                {:data-url (str href "/edit-form/" (:id row))
+                 :data-bs-toggle "modal"
+                 :data-bs-target "#exampleModal"}))
+             [:i.bi.bi-pencil.me-1]
+             (i18n/tr request :common/edit)])
+          ;; Delete button
+          (let [disabled? (not delete)]
+            [:a.btn.btn-danger.btn-sm.fw-semibold.shadow-sm.rounded-pill
+             {:href (str href "/delete/" (:id row))
+              :tabindex (when disabled? -1)
+              :aria-disabled (when disabled? "true")
+              :class (str "btn btn-danger btn-sm fw-semibold shadow-sm.rounded-pill"
+                          (when disabled? " disabled"))}
+             [:i.bi.bi-trash.me-1]
+             (i18n/tr request :common/delete)]))]]])])
 
 (defn build-subgrid-modal
   "Modal container for subgrids"
