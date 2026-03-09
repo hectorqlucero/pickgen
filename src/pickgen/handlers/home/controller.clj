@@ -5,7 +5,7 @@
    [pickgen.i18n.core :as i18n]
    [pickgen.handlers.home.model :refer [get-user get-users update-password]]
    [pickgen.handlers.home.view :refer [change-password-view home-view
-                                         main-view]]
+                                       main-view]]
    [pickgen.layout :refer [application]]
    [pickgen.models.util :refer [get-session-id]]
    [ring.util.response :refer [redirect]]))
@@ -33,7 +33,7 @@
   (let [title (i18n/tr params :auth/login)
         username (:username params)
         password (:password params)
-        row (first (get-user username))
+        row (get-user username)
         active (:active row)
         return-path "/"
         back-msg (i18n/tr params :common/back)
@@ -61,7 +61,7 @@
   (let [title (i18n/tr request :auth/login)
         username (:email params)
         password (:password params)
-        row (first (get-user username))
+        row (get-user username)
         result (or (update-password username (hashers/derive password)) 0)
         return-path "/home/login"
         back-msg (i18n/tr request :common/back)
