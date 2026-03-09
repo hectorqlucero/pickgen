@@ -699,12 +699,12 @@
          "  {:success true})\n")))
 
 (defn write-hook-stub
-  "Writes hook stub file if it doesn't exist"
-  [entity-name fields]
+  "Writes hook stub file. Overwrites when force? is true, skips with message otherwise."
+  [entity-name fields & {:keys [force?] :or {force? false}}]
   (let [filename (str (hooks-path) entity-name ".clj")
         file (io/file filename)]
-    (if (.exists file)
-      (println (str "   ⚠️  Hook file already exists: " filename))
+    (if (and (.exists file) (not force?))
+      (println (str "   Hook file already exists, skipping: " filename))
       (do
         (io/make-parents file)
         (spit file (generate-hook-stub entity-name fields))
@@ -835,18 +835,19 @@
                 "}\n")))))
 
 (defn write-entity-config
-  "Writes entity configuration to file"
+  "Writes entity configuration to file. Overwrites when force? is true, skips with message otherwise."
   [config & {:keys [force?] :or {force? false}}]
   (let [filename (str "resources/entities/" (name (:entity config)) ".edn")
         file (io/file filename)]
 
-    (when (and (.exists file) (not force?))
-      (throw (ex-info (str "Entity config already exists: " filename "\nUse --force to overwrite")
-                      {:file filename})))
-
-    (io/make-parents file)
-    (spit file (generate-edn-content config))
-    filename))
+    (if (and (.exists file) (not force?))
+      (do
+        (println (str "   Entity config already exists, skipping: " filename))
+        nil)
+      (do
+        (io/make-parents file)
+        (spit file (generate-edn-content config))
+        filename))))
 
 (defn scaffold-table
   "Scaffolds a single table"
@@ -867,28 +868,34 @@
           field-count (count (:fields config))
           subgrid-count (count (:subgrids config))]
 
-      (println (str "Generated " filename))
-      (println (str "   - " field-count " fields detected"))
-      (when (pos? subgrid-count)
-        (println (str "   - " subgrid-count " subgrid(s) detected")))
-      (println (str "   - Default queries created"))
+      (if filename
+        (do
+          (println (str "Generated " filename))
+          (println (str "   - " field-count " fields detected"))
+          (when (pos? subgrid-count)
+            (println (str "   - " subgrid-count " subgrid(s) detected")))
+          (println (str "   - Default queries created"))
 
-      ;; Generate hook stub file
-      (when with-hooks?
-        (write-hook-stub (name table-name) (:fields config)))
+          ;; Generate hook stub file
+          (when with-hooks?
+            (write-hook-stub (name table-name) (:fields config) :force? force?))
 
-      (println)
-      (println "JUNIOR DEVELOPER - Next steps:")
-      (println (str "  1. Edit " filename))
-      (println (str "     - Customize field labels"))
-      (println (str "     - Mark required fields"))
-      (println (str "     - Test at: /admin/" (name table-name)))
-      (println)
-      (println "SENIOR DEVELOPER - When needed:")
-      (println (str "  2. Implement hooks in: " (hooks-path) (name table-name) ".clj"))
-      (println (str "  3. Uncomment :hooks in " filename))
-      (println (str "  4. See: HOOKS_GUIDE.md for examples"))
-      (println))
+          (println)
+          (println "JUNIOR DEVELOPER - Next steps:")
+          (println (str "  1. Edit " filename))
+          (println (str "     - Customize field labels"))
+          (println (str "     - Mark required fields"))
+          (println (str "     - Test at: /admin/" (name table-name)))
+          (println)
+          (println "SENIOR DEVELOPER - When needed:")
+          (println (str "  2. Implement hooks in: " (hooks-path) (name table-name) ".clj"))
+          (println (str "  3. Uncomment :hooks in " filename))
+          (println (str "  4. See: HOOKS_GUIDE.md for examples"))
+          (println))
+
+        ;; Entity was skipped, still check hooks
+        (when with-hooks?
+          (write-hook-stub (name table-name) (:fields config) :force? force?))))
 
     (catch Exception e
       (println (str "Failed to scaffold " table-name ": " (.getMessage e)))
