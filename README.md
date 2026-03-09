@@ -19,7 +19,6 @@ Includes a working demo app (contacts, siblings, cars) to show how everything fi
 - [Entity Configuration Cheat Sheet](#entity-configuration-cheat-sheet)
 - [Field Types Cheat Sheet](#field-types-cheat-sheet)
 - [Field Options Cheat Sheet](#field-options-cheat-sheet)
-- [Foreign Key (FK) Fields](#foreign-key-fk-fields)
 - [Queries Cheat Sheet](#queries-cheat-sheet)
 - [Actions Cheat Sheet](#actions-cheat-sheet)
 - [Subgrids Cheat Sheet](#subgrids-cheat-sheet)
@@ -246,7 +245,6 @@ Every field type you can use in `:fields`:
 | `:file` | `<input type="file">` | File uploads | Photo, PDF |
 | `:hidden` | `<input type="hidden">` | Not shown to user | ID, multivalue IDs |
 | `:computed` | Read-only text | Calculated values | Total, full name |
-| `:fk` | Dynamic `<select>` | Foreign key lookup | Select a category |
 
 ### Examples of Every Field Type
 
@@ -300,12 +298,6 @@ Every field type you can use in `:fields`:
   ;; Computed — read-only, calculated in hooks
   {:id :full_name :label "Full Name" :type :computed}
 
-  ;; FK — dynamic select populated from another entity
-  {:id :category_id :label "Category" :type :fk
-   :fk :categories
-   :fk-field [:name]
-   :fk-sort :name}
-
   ;; Hidden multivalue field (for parent-child subgrids)
   {:id :car_ids :label "Car Ids" :type :hidden}]
 ```
@@ -354,61 +346,6 @@ Every option you can put on a field:
 
 ---
 
-## Foreign Key (FK) Fields
-
-Use `:type :fk` to create a dropdown that loads options from another entity.
-
-| FK Option | Type | What it does |
-|-----------|------|--------------|
-| `:fk` | keyword | Target entity (e.g. `:categories`) |
-| `:fk-field` | vector of keywords | Fields to display from target (e.g. `[:name]`) |
-| `:fk-separator` | string | Separator between display fields (default `" — "`) |
-| `:fk-sort` | keyword or vector | Sort FK options by field(s) |
-| `:fk-filter` | vector | Filter FK options: `[:active "true"]` |
-| `:fk-parent` | keyword | Parent FK field for dependent/cascading selects |
-| `:fk-can-create?` | boolean | Allow creating new FK record inline |
-| `:fk-form-fields` | vector of keywords | Fields for inline FK creation form |
-
-### FK Examples
-
-```clojure
-;; Simple FK — dropdown of category names
-{:id :category_id :label "Category" :type :fk
- :fk :categories
- :fk-field [:name]}
-
-;; FK with multiple display fields
-{:id :product_id :label "Product" :type :fk
- :fk :products
- :fk-field [:name :sku]
- :fk-separator " — "}
-
-;; FK sorted and filtered
-{:id :agent_id :label "Agent" :type :fk
- :fk :agents
- :fk-field [:name]
- :fk-sort :name
- :fk-filter [:active "true"]}
-
-;; Dependent FK — city depends on state selection
-{:id :state_id :label "State" :type :fk
- :fk :states
- :fk-field [:name]}
-{:id :city_id :label "City" :type :fk
- :fk :cities
- :fk-field [:name]
- :fk-parent :state_id}
-
-;; FK with inline creation
-{:id :brand_id :label "Brand" :type :fk
- :fk :brands
- :fk-field [:name]
- :fk-can-create? true
- :fk-form-fields [:name]}
-```
-
----
-
 ## Queries Cheat Sheet
 
 The `:queries` map controls how records are fetched.
@@ -438,12 +375,6 @@ The `:queries` map controls how records are fetched.
 :queries {:list "SELECT * FROM products ORDER BY name ASC"
           :get  "SELECT * FROM products WHERE id = ?"}
 
-;; SQL with JOIN (for legacy FK relationships)
-:queries {:list "SELECT p.*, c.name as category_name
-                 FROM products p
-                 LEFT JOIN categories c ON p.category_id = c.id
-                 ORDER BY p.name"
-          :get  "SELECT * FROM products WHERE id = ?"}
 ```
 
 ---
@@ -481,13 +412,10 @@ Subgrids show child records as tabs on a parent entity's detail page. They use t
 |-----|------|-----------|--------------|
 | `:entity` | keyword | **Yes** | Child entity keyword (e.g. `:cars`) |
 | `:title` | string | No | Tab panel title |
-| `:multivalue-field` | keyword | **Yes*** | Parent field storing child IDs (Pick/D3 mode) |
-| `:foreign-key` | keyword | **Yes*** | Child column pointing to parent (legacy FK mode) |
+| `:multivalue-field` | keyword | **Yes** | Parent field storing child IDs (e.g. `:car_ids`) |
 | `:display-fields` | vector | No | Which child fields to show in the subgrid |
 | `:icon` | string | No | Bootstrap icon class (e.g. `"bi bi-list-ul"`) |
 | `:label` | string | No | Tab label text |
-
-*Use `:multivalue-field` (Pick/D3 style) **or** `:foreign-key` (legacy), not both.
 
 ### Subgrid Examples
 
@@ -505,14 +433,6 @@ Subgrids show child records as tabs on a parent entity's detail page. They use t
             :display-fields [:company :model :year]
             :icon "bi bi-list-ul"
             :label "Cars"}]
-
-;; Legacy FK style — child table has a parent_id column
-:subgrids [{:entity :order_items
-            :title "Order Items"
-            :foreign-key :order_id
-            :display-fields [:product_name :quantity :price]
-            :icon "bi bi-cart"
-            :label "Items"}]
 ```
 
 ### Important
@@ -1141,8 +1061,9 @@ All engine-driven entities are available at `/admin/<entity-name>`:
 |-------------------|---------------------|
 | Child table has `parent_id` column | Parent table has `child_ids` TEXT column |
 | `JOIN` to get related data | T-dictionary translates IDs to data |
-| Delete child = delete row | Delete child = delete row + remove ID from parent |
+| Delete child = delete row only | Delete child = delete row + remove ID from parent |
 | N+1 query problem | Single dictionary-aware query |
+| Schema coupling between tables | Tables are standalone and independent |
 
 ### The `]` Delimiter
 
