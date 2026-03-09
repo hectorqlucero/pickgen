@@ -2,6 +2,7 @@
 /classes
 /uploads
 /checkouts
+db/*.sqlite
 resources/private/app-config.edn
 profiles.clj
 pom.xml

@@ -288,7 +288,13 @@ $(document).ready(function () {
             subgridModal.addClass('show').css('display', 'block');
           }
         } else {
-          if (isNew && data && data.id) {
+          // Check if this is a TabGrid subgrid save (parent_entity hidden field injected by tabgrid.js)
+          var tabgridParentEntity = $($form).find('input[name="parent_entity"]').val();
+          if (tabgridParentEntity) {
+            // TabGrid subgrid: close modal and reload to keep parent URL intact
+            $('#exampleModal').modal('hide');
+            location.reload();
+          } else if (isNew && data && data.id) {
             var url = new URL(window.location.href);
             url.searchParams.set('id', data.id);
             window.location.href = url.toString();

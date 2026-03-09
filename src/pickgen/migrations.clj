@@ -112,28 +112,27 @@
    A-type dictionaries are created automatically by create-file!.
    We only need to define T-type dictionaries to replace relational FK joins."
   [db]
-  ;; T-dictionaries on contactos: translate sibling_ids → siblings data
-  (let [dict "contactos_DICT"]
-    (when-not (dict-field-exists? db dict "SIBLING_NAMES")
-      (println "[migrate] Creating dictionary: contactos_DICT.SIBLING_NAMES")
-      (pick/define-dictionary-field db dict "SIBLING_NAMES" "T" "6" "Tsiblings;NAME" "Sibling Names"))
-
-    (when-not (dict-field-exists? db dict "SIBLING_AGES")
-      (println "[migrate] Creating dictionary: contactos_DICT.SIBLING_AGES")
-      (pick/define-dictionary-field db dict "SIBLING_AGES" "T" "6" "Tsiblings;AGE" "Sibling Ages"))
-
-    ;; T-dictionaries on contactos: translate car_ids → cars data
-    (when-not (dict-field-exists? db dict "CAR_COMPANIES")
-      (println "[migrate] Creating dictionary: contactos_DICT.CAR_COMPANIES")
-      (pick/define-dictionary-field db dict "CAR_COMPANIES" "T" "7" "Tcars;COMPANY" "Car Companies"))
-
-    (when-not (dict-field-exists? db dict "CAR_MODELS")
-      (println "[migrate] Creating dictionary: contactos_DICT.CAR_MODELS")
-      (pick/define-dictionary-field db dict "CAR_MODELS" "T" "7" "Tcars;MODEL" "Car Models"))
-
-    (when-not (dict-field-exists? db dict "CAR_YEARS")
-      (println "[migrate] Creating dictionary: contactos_DICT.CAR_YEARS")
-      (pick/define-dictionary-field db dict "CAR_YEARS" "T" "7" "Tcars;YEAR" "Car Years"))))
+  ;; Note: A-type (Attribute) fields are created automatically by create-file!
+  ;; The following fields are created automatically for contactos table:
+  ;; - NAME (A-type, position 1)
+  ;; - EMAIL (A-type, position 2)
+  ;; - PHONE (A-type, position 3)
+  ;; - IMAGEN (A-type, position 4)
+  ;; - SIBLING_IDS (A-type, position 5)
+  ;; - CAR_IDS (A-type, position 6)
+  (let [d "contactos_DICT"]
+    ;; Translate sibling_ids (position 5) → siblings data
+    (when-not (dict-field-exists? db d "SIBLING_NAMES")
+      (pick/define-dictionary-field db d "SIBLING_NAMES" "T" "5" "Tsiblings;NAME" "Sibling Names"))
+    (when-not (dict-field-exists? db d "SIBLING_AGES")
+      (pick/define-dictionary-field db d "SIBLING_AGES" "T" "5" "Tsiblings;AGE" "Sibling Ages"))
+    ;; Translate car_ids (position 6) → cars data
+    (when-not (dict-field-exists? db d "CAR_COMPANIES")
+      (pick/define-dictionary-field db d "CAR_COMPANIES" "T" "6" "Tcars;COMPANY" "Car Companies"))
+    (when-not (dict-field-exists? db d "CAR_MODELS")
+      (pick/define-dictionary-field db d "CAR_MODELS" "T" "6" "Tcars;MODEL" "Car Models"))
+    (when-not (dict-field-exists? db d "CAR_YEARS")
+      (pick/define-dictionary-field db d "CAR_YEARS" "T" "6" "Tcars;YEAR" "Car Years"))))
 
 ;; ---------------------------------------------------------------------------
 ;; Views (created via raw SQL since pickdict doesn't have view support)

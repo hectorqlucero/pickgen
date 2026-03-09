@@ -53,9 +53,13 @@ lein migrate
 
 # 4. Seed default user accounts
 lein database
+# Or seed everything (users + sample contactos, siblings, cars):
+# lein database -- --all
 
 # 5. Start the app
 lein run
+# Or start with hot reloading (recommended for development):
+# lein with-profile dev run
 ```
 
 Open **http://localhost:3000** — log in with `admin@example.com` / `admin`.
@@ -96,7 +100,9 @@ Roles control what a user can do:
 |--------------------|-------------------------------------------------------|
 | `lein migrate`     | Creates all tables, dictionaries, and views (safe to run multiple times) |
 | `lein database`    | Seeds the default user accounts                       |
+| `lein database -- --all` | Seeds users + sample contactos, siblings, cars   |
 | `lein run`         | Starts the web server on port 3000                    |
+| `lein with-profile dev run` | Starts with hot reloading (recommended for dev) |
 | `lein test`        | Runs the test suite                                   |
 | `lein check`       | Checks for compilation errors                         |
 | `lein scaffold`    | Generates entity config + hook files from database    |
@@ -799,6 +805,8 @@ Edit `resources/entities/products.edn`:
 
 ```bash
 lein run
+# Or with hot reloading:
+lein with-profile dev run
 ```
 
 The new entity appears in the menu automatically at `/admin/products`.
