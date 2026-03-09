@@ -1,6 +1,7 @@
 (ns pickgen.handlers.home.model
   (:require
-   [pickgen.models.crud :refer [db Query Save]]))
+   [pickgen.models.crud :refer [db Query Save]]
+   [pickdict.crud :as pick-crud]))
 
 (defn get-user
   [username]
@@ -8,12 +9,13 @@
 
 (defn get-users
   []
-  (Query ["SELECT * FROM users"]))
+  (pick-crud/read-all-records db "users"))
 
 (defn update-password
   [username password]
   (Save :users {:password password} ["username = ?" username]))
 
 (comment
+  (Query ["select * from contactos"])
   (get-user "system@gmail.com")
   (get-users))

@@ -19,6 +19,7 @@ Includes a working demo app (contacts, siblings, cars) to show how everything fi
 - [Entity Configuration Cheat Sheet](#entity-configuration-cheat-sheet)
 - [Field Types Cheat Sheet](#field-types-cheat-sheet)
 - [Field Options Cheat Sheet](#field-options-cheat-sheet)
+- [Custom Code (The 20%)](#custom-code-the-20)
 - [Queries Cheat Sheet](#queries-cheat-sheet)
 - [Actions Cheat Sheet](#actions-cheat-sheet)
 - [Subgrids Cheat Sheet](#subgrids-cheat-sheet)
@@ -164,6 +165,11 @@ pickgen/
 │   ├── engine/
 │   │   ├── config.clj            # Entity config loading and validation
 │   │   └── router.clj            # CRUD route handlers (save, delete, list)
+│   ├── handlers/                 # Custom code (MVC pattern — the 20%)
+│   │   └── home/                 # Example: home/login pages
+│   │       ├── controller.clj    # Request handling, session, redirects
+│   │       ├── model.clj         # Data access (pickdict queries)
+│   │       └── view.clj          # Hiccup HTML templates
 │   ├── hooks/                    # Lifecycle hooks (before-save, after-load, etc.)
 │   │   ├── cars.clj
 │   │   ├── contactos.clj
@@ -173,6 +179,8 @@ pickgen/
 │   │   ├── crud.clj              # Core DB operations (save, delete, query)
 │   │   └── cdb.clj               # DB connection + user seeding
 │   ├── routes/                   # Route definitions
+│   │   ├── routes.clj            # Public routes (login, home)
+│   │   └── proutes.clj           # Private/authenticated routes
 │   ├── scaffold/                 # Entity code generator
 │   └── tabgrid/                  # Subgrid UI (data loading, rendering)
 │       ├── data.clj              # Fetches subgrid records (MV field logic)
@@ -347,6 +355,130 @@ Every option you can put on a field:
 
 ---
 
+## Custom Code (The 20%)
+
+The engine handles ~80% of your app (CRUD screens, grids, forms, subgrids). For the other 20% — custom pages, dashboards, reports, login flows — you write manual code using the **MVC pattern** in `src/<project>/handlers/`.
+
+### Folder Structure
+
+```
+src/pickgen/
+├── handlers/              # One folder per feature
+│   └── home/              # Example: home + login pages
+│       ├── controller.clj # Handles requests, sessions, redirects
+│       ├── model.clj      # Data access using pickdict
+│       └── view.clj       # Hiccup HTML templates
+├── routes/
+│   ├── routes.clj         # Public routes (no login required)
+│   └── proutes.clj        # Private routes (login required)
+└── menu.clj               # Add manual menu items here
+```
+
+### Model — Data Access with pickdict
+
+Always use pickdict functions instead of raw SQL. This ensures T-type and C-type dictionary fields are resolved automatically.
+
+```clojure
+(ns myapp.handlers.home.model
+  (:require
+   [myapp.models.crud :refer [db Save]]
+   [pickdict.crud :as pick-crud]))
+
+;; Read all records (resolves all dictionary fields — A, T, C types)
+(defn get-users []
+  (pick-crud/read-all-records db "users"))
+
+;; Read one record by ID (resolves all dictionary fields)
+(defn get-user-by-id [id]
+  (pick-crud/find-by-id db "users" id))
+
+;; Save (upsert) a record
+(defn update-password [username password]
+  (Save :users {:password password} ["username = ?" username]))
+```
+
+**pickdict functions to use:**
+
+| Function | What it does |
+|----------|--------------|
+| `pick-crud/read-all-records` | List all records with dictionary resolution |
+| `pick-crud/find-by-id` | Get one record by ID with dictionary resolution |
+| `Save` | Upsert — updates if exists, inserts if not |
+| `Insert` | Insert a new record |
+| `Delete` | Delete a record |
+| `Query` | Run a raw SQL query (use only when pickdict functions aren't enough) |
+
+### Controller — Request Handling
+
+Controllers receive the Ring request, call the model for data, call the view for HTML, and wrap it in the layout.
+
+```clojure
+(ns myapp.handlers.home.controller
+  (:require
+   [myapp.handlers.home.model :refer [get-users]]
+   [myapp.handlers.home.view :refer [home-view]]
+   [myapp.layout :refer [application]]))
+
+(defn main [request]
+  (let [title "Home"
+        users (get-users)
+        content (home-view users)]
+    (application request title 1 nil content)))
+```
+
+### View — Hiccup HTML
+
+Views return Hiccup data structures (Clojure vectors → HTML).
+
+```clojure
+(ns myapp.handlers.home.view)
+
+(defn home-view [users]
+  [:div.container.mt-5
+   [:h1 "Users"]
+   [:table.table
+    [:thead [:tr [:th "Name"] [:th "Email"]]]
+    [:tbody
+     (for [u users]
+       [:tr [:td (:firstname u)] [:td (:email u)]])]]])
+```
+
+### Routes — Wiring It Together
+
+Public routes go in `routes.clj`, authenticated routes go in `proutes.clj`.
+
+```clojure
+;; routes.clj — public (no login required)
+(ns myapp.routes.routes
+  (:require
+   [compojure.core :refer [defroutes GET POST]]
+   [myapp.handlers.home.controller :as home]))
+
+(defroutes open-routes
+  (GET "/" request (home/main request))
+  (GET "/home/login" request (home/login request))
+  (POST "/home/login" request (home/login-user request)))
+```
+
+```clojure
+;; proutes.clj — private (login required)
+(ns myapp.routes.proutes
+  (:require
+   [compojure.core :refer [defroutes GET]]
+   [myapp.handlers.reports.controller :as reports]))
+
+(defroutes proutes
+  (GET "/reports/sales" request (reports/sales request)))
+```
+
+### Adding a New Custom Page
+
+1. Create `src/<project>/handlers/<feature>/model.clj`, `controller.clj`, `view.clj`
+2. Add routes in `routes.clj` (public) or `proutes.clj` (private)
+3. Add menu items in `menu.clj` if needed
+
+---
+
 ## Queries Cheat Sheet
 
 The `:queries` map controls how records are fetched.
@@ -360,22 +492,16 @@ The `:queries` map controls how records are fetched.
 
 | Type | Example | When to use |
 |------|---------|-------------|
-| `:pickdict/list` | `:pickdict/list` | **Recommended.** Auto-resolves T-dictionary translations |
-| `:pickdict/get` | `:pickdict/get` | **Recommended.** Fetches single record with translations |
-| SQL string | `"SELECT * FROM products ORDER BY name"` | Custom SQL queries |
+| `:pickdict/list` | `:pickdict/list` | **Recommended.** Auto-resolves all dictionary fields (A, T, C) |
+| `:pickdict/get` | `:pickdict/get` | **Recommended.** Fetches single record with all dictionary fields |
 | Qualified keyword | `:myapp.queries/custom-list` | Call a function you write |
 
 ### Examples
 
 ```clojure
-;; Pickdict queries (recommended — auto-resolves T-dictionaries)
+;; Pickdict queries (recommended — resolves A, T, and C dictionary fields)
 :queries {:list :pickdict/list
           :get :pickdict/get}
-
-;; Custom SQL queries
-:queries {:list "SELECT * FROM products ORDER BY name ASC"
-          :get  "SELECT * FROM products WHERE id = ?"}
-
 ```
 
 ---
