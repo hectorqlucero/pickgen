@@ -31,6 +31,7 @@ Includes a working demo app (contacts, siblings, cars) to show how everything fi
 - [Configuration (app-config.edn)](#configuration-app-configedn)
 - [i18n (Translations)](#i18n-translations)
 - [URL Routing](#url-routing)
+- [Dictionary Fields Cheat Sheet](#dictionary-fields-cheat-sheet)
 - [Pick/D3 Multivalue Philosophy](#pickd3-multivalue-philosophy)
 - [License](#license)
 
@@ -1050,6 +1051,136 @@ All engine-driven entities are available at `/admin/<entity-name>`:
 | `/admin/:entity/edit-form/:id` | GET | Edit record form (AJAX/modal) |
 | `/admin/:entity/save` | POST | Save (create or update) |
 | `/admin/:entity/delete/:id` | GET | Delete record |
+
+---
+
+## Dictionary Fields Cheat Sheet
+
+Dictionary fields are defined in your migrations using `pick/define-dictionary-field`. They tell pickdict how to derive, translate, or compute values beyond what's stored in the raw table columns.
+
+```clojure
+;; Signature:
+(pick/define-dictionary-field db dict-table key type position conversion description)
+```
+
+| Parameter | What it is |
+|-----------|------------|
+| `db` | Database connection |
+| `dict-table` | Dictionary table name (e.g. `"products_DICT"`) |
+| `key` | Field name (e.g. `"CUSTOMER_NAME"`) |
+| `type` | `"A"` = Attribute, `"T"` = Translation, `"C"` = Computed |
+| `position` | Column position in the table (for A and T types) |
+| `conversion` | Type-specific expression (see below) |
+| `description` | Human-readable description |
+
+### A-type — Attribute Fields
+
+Attribute fields map directly to a column in the table. They are created automatically by `pick/create-file!`, but you can also define them manually.
+
+```clojure
+;; Map dictionary field NAME to the column at position 1
+(pick/define-dictionary-field db "products_DICT"
+  "NAME" "A" "1" "" "Product Name")
+
+;; Map dictionary field EMAIL to the column at position 3
+(pick/define-dictionary-field db "users_DICT"
+  "EMAIL" "A" "3" "" "User Email")
+```
+
+**When to use:** Rarely needed manually — `pick/create-file!` creates A-type fields for every column. Use when you need to add an alias or re-map a column.
+
+### T-type — Translation Fields
+
+Translation fields resolve multivalue IDs into data from another table. This is how pickdict replaces traditional foreign key JOINs.
+
+```clojure
+;; Translate car_ids → look up each ID in cars table, return COMPANY field
+(pick/define-dictionary-field db "contactos_DICT"
+  "CAR_COMPANIES" "T" "7" "Tcars;COMPANY" "Car Companies")
+
+;; Translate car_ids → look up each ID in cars table, return MODEL field
+(pick/define-dictionary-field db "contactos_DICT"
+  "CAR_MODELS" "T" "7" "Tcars;MODEL" "Car Models")
+
+;; Translate sibling_ids → look up each ID in siblings table, return NAME field
+(pick/define-dictionary-field db "contactos_DICT"
+  "SIBLING_NAMES" "T" "6" "Tsiblings;NAME" "Sibling Names")
+
+;; Translate order_ids → look up each ID in orders table, return customer name
+(pick/define-dictionary-field db "invoice_DICT"
+  "CUSTOMER_NAME" "T" "1" "Tcustomer;NAME" "Customer Name")
+```
+
+**Conversion format:** `"T<table>;<FIELD>"` — the `T` prefix, then the target table name, semicolon, then the target field name (uppercase).
+
+**When to use:** Every time a parent table stores child IDs in a multivalue field and you want to display data from the child table without writing SQL JOINs.
+
+### C-type — Computed Fields
+
+Computed fields calculate values using expressions or aggregations. The value is derived at query time — nothing is stored in the database.
+
+```clojure
+;; Sum aggregation — total stock across all stock level entries
+(pick/define-dictionary-field db "products_DICT"
+  "TOTAL_STOCK" "C" "" "SUM:STOCK_LEVELS" "Total Stock")
+
+;; Math expression — calculate tax as 8% of subtotal
+(pick/define-dictionary-field db "invoice_DICT"
+  "TAX" "C" "" "(* SUBTOTAL 0.08)" "Tax Amount")
+
+;; Math expression — calculate total as subtotal + tax
+(pick/define-dictionary-field db "invoice_DICT"
+  "TOTAL" "C" "" "(+ SUBTOTAL TAX)" "Invoice Total")
+
+;; Count aggregation — number of items in a multivalue field
+(pick/define-dictionary-field db "orders_DICT"
+  "ITEM_COUNT" "C" "" "COUNT:ITEM_IDS" "Number of Items")
+```
+
+**When to use:** When you need calculated fields (totals, tax, counts, derived values) without storing redundant data.
+
+### Quick Reference: Dictionary Type Summary
+
+| Type | Letter | Position? | Conversion | Purpose |
+|------|--------|-----------|------------|---------|
+| Attribute | `"A"` | Yes | `""` (empty) | Maps to a table column |
+| Translation | `"T"` | Yes | `"T<table>;<FIELD>"` | Resolves multivalue IDs to child data |
+| Computed | `"C"` | No (`""`) | Expression or `AGG:FIELD` | Calculates derived values |
+
+### Complete Migration Example with All Dictionary Types
+
+```clojure
+;; Create the products table
+(when-not (table-exists? db "products")
+  (pick/create-file! db "products"
+    {:id          "INTEGER PRIMARY KEY AUTOINCREMENT"
+     :name        "TEXT"
+     :price       "REAL"
+     :quantity    "INTEGER"
+     :category_ids "TEXT"    ;; Multivalue: 1]3]5
+     :supplier_id  "TEXT"})) ;; Multivalue: 2
+
+;; A-type — created automatically by create-file!, but for reference:
+;; (pick/define-dictionary-field db "products_DICT" "NAME" "A" "1" "" "Product Name")
+
+;; T-type — translate category_ids to category names
+(let [dict "products_DICT"]
+  (when-not (dict-field-exists? db dict "CATEGORY_NAMES")
+    (pick/define-dictionary-field db dict
+      "CATEGORY_NAMES" "T" "5" "Tcategories;NAME" "Category Names"))
+
+  ;; T-type — translate supplier_id to supplier company
+  (when-not (dict-field-exists? db dict "SUPPLIER_NAME")
+    (pick/define-dictionary-field db dict
+      "SUPPLIER_NAME" "T" "6" "Tsuppliers;COMPANY" "Supplier Name"))
+
+  ;; C-type — computed total value (price * quantity)
+  (when-not (dict-field-exists? db dict "TOTAL_VALUE")
+    (pick/define-dictionary-field db dict
+      "TOTAL_VALUE" "C" "" "(* PRICE QUANTITY)" "Total Value")))
+```
+
+When you query with `:pickdict/list`, the engine automatically resolves all dictionary fields — T-type translations and C-type computations are included in the result without writing any SQL.
 
 ---
 
