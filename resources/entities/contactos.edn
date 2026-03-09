@@ -12,42 +12,40 @@
  :rights ["U" "A" "S"]  ;; User levels: U=User, A=Admin, S=System
  :mode :parameter-driven
  :menu-category :Contactos
- 
+
  ;; Fields auto-detected from database schema
- :fields [
-          {:id :id :label "ID" :type :hidden}
-          {:id :name :label "Name" :type :textarea :placeholder "Name..."}
+ :fields [{:id :id :label "ID" :type :hidden}
+          {:id :name :label "Name" :type :text :placeholder "Nombre..."}
           {:id :email :label "Email" :type :email :placeholder "user@example.com"}
-          {:id :phone :label "Phone" :type :text :placeholder "Phone..."}
+          {:id :phone :label "Phone" :type :tel :placeholder "Telefono..."}
           {:id :imagen :label "Imagen" :type :file}
           {:id :sibling_ids :label "Sibling Ids" :type :hidden}
           {:id :car_ids :label "Car Ids" :type :hidden}]
- 
+
  ;; Queries — pickdict dictionary-aware or raw SQL
  ;; :pickdict/list and :pickdict/get auto-resolve T-dictionary translations
  :queries {:list :pickdict/list
            :get :pickdict/get}
- 
+
  ;; Available actions
  :actions {:new true :edit true :delete true}
- 
+
  ;; Enable audit trail (tracks who created/modified and when)
  ;; Uncomment to enable:
  ;; :audit? true
- 
+
  ;; Lifecycle hooks for business logic
  ;; Implement in src/pickgen/hooks/contactos.clj
- :hooks {:after-load :pickgen.hooks.contactos/after-load
-          :before-save :pickgen.hooks.contactos/before-save}
+ :hooks {:after-load :contactos.hooks.contactos/after-load
+         :before-save :contactos.hooks.contactos/before-save}
  ;; Additional hooks (uncomment as needed):
- ;;   before-load :pickgen.hooks.contactos/before-load
- ;;   after-save :pickgen.hooks.contactos/after-save
- ;;   before-delete :pickgen.hooks.contactos/before-delete
- ;;   after-delete :pickgen.hooks.contactos/after-delete
- 
+ ;;   before-load :contactos.hooks.contactos/before-load
+ ;;   after-save :contactos.hooks.contactos/after-save
+ ;;   before-delete :contactos.hooks.contactos/before-delete
+ ;;   after-delete :contactos.hooks.contactos/after-delete
+
  ;; Subgrids for related tables (auto-detected from T-dictionaries)
- :subgrids [
-            {:entity :siblings
+ :subgrids [{:entity :siblings
              :title "Siblings"
              :multivalue-field :sibling_ids
              :display-fields [:name :age]

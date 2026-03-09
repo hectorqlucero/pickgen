@@ -12,37 +12,36 @@
  :rights ["U" "A" "S"]  ;; User levels: U=User, A=Admin, S=System
  :mode :parameter-driven
  :menu-hidden? true  ;; Hide from main menu (child entity accessed via subgrids)
- 
+
  ;; Fields auto-detected from database schema
- :fields [
-          {:id :id :label "ID" :type :hidden}
-          {:id :company :label "Company" :type :textarea :placeholder "Company..."}
-          {:id :model :label "Model" :type :textarea :placeholder "Model..."}
+ :fields [{:id :id :label "ID" :type :hidden}
+          {:id :company :label "Company" :type :text :placeholder "Compañia..."}
+          {:id :model :label "Model" :type :text :placeholder "Modelo..."}
           {:id :year :label "Year" :type :number}
           {:id :imagen :label "Imagen" :type :file}]
- 
+
  ;; Queries — pickdict dictionary-aware or raw SQL
  ;; :pickdict/list and :pickdict/get auto-resolve T-dictionary translations
  :queries {:list :pickdict/list
            :get :pickdict/get}
- 
+
  ;; Available actions
  :actions {:new true :edit true :delete true}
- 
+
  ;; Enable audit trail (tracks who created/modified and when)
  ;; Uncomment to enable:
  ;; :audit? true
- 
+
  ;; Lifecycle hooks for business logic
  ;; Implement in src/pickgen/hooks/cars.clj
  :hooks {:after-load :pickgen.hooks.cars/after-load
-          :before-save :pickgen.hooks.cars/before-save}
+         :before-save :pickgen.hooks.cars/before-save}
  ;; Additional hooks (uncomment as needed):
  ;;   before-load :pickgen.hooks.cars/before-load
  ;;   after-save :pickgen.hooks.cars/after-save
  ;;   before-delete :pickgen.hooks.cars/before-delete
  ;;   after-delete :pickgen.hooks.cars/after-delete
- 
+
  ;; Subgrids (parent-child relationships via Pick/D3 multivalue fields)
  ;; Uncomment if this entity has child records:
  ;; :subgrids [{:entity :related-table
@@ -50,4 +49,4 @@
  ;;             :multivalue-field :related_ids
  ;;             :icon "bi bi-list"
  ;;             :label "Related Records"}]
-}
+ }

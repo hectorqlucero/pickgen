@@ -12,46 +12,50 @@
  :rights ["U" "A" "S"]  ;; User levels: U=User, A=Admin, S=System
  :mode :parameter-driven
  :menu-category :Users
- 
+
  ;; Fields auto-detected from database schema
- :fields [
-          {:id :fax :label "Fax" :type :textarea :placeholder "Fax..."}
-          {:id :email :label "Email" :type :email :placeholder "user@example.com"}
-          {:id :password :label "Password" :type :password}
-          {:id :lastname :label "Lastname" :type :textarea :placeholder "Lastname..."}
-          {:id :phone :label "Phone" :type :text :placeholder "Phone..."}
-          {:id :imagen :label "Imagen" :type :file}
-          {:id :last_login :label "Last Login" :type :textarea :placeholder "Last Login..."}
-          {:id :username :label "Username" :type :textarea :placeholder "Username..."}
-          {:id :level :label "Level" :type :textarea :placeholder "Level..."}
-          {:id :dob :label "Dob" :type :textarea :placeholder "Dob..."}
-          {:id :firstname :label "Firstname" :type :textarea :placeholder "Firstname..."}
-          {:id :active :label "Active" :type :textarea :placeholder "Active..."}
-          {:id :id :label "ID" :type :hidden}
-          {:id :cell :label "Cell" :type :text :placeholder "Cell..."}]
- 
+ :fields [{:id :id :label "ID" :type :hidden}
+          {:id :username :label "Username" :type :email :placeholder "Usuario..." :required? true}
+          {:id :firstname :label "Firstname" :type :text :placeholder "Firstname..."}
+          {:id :lastname :label "Lastname" :type :text :placeholder "Lastname..."}
+          {:id :dob_formatted :label "Dob" :type :date :placeholder "Dob..."}
+          {:id :phone :label "Phone" :type :tel :placeholder "Phone..."}
+          {:id :cell :label "Cell" :type :tel :placeholder "Cell..."}
+          {:id :email :label "Email" :type :email :placeholder "user@example.com" :required? true}
+          {:id :level :label "Level" :type :select :options [{:value "" :label "--- Seleccionar ---"}
+                                                             {:value "U" :label "Usuario"}
+                                                             {:value "A" :label "Administrator"}
+                                                             {:value "S" :label "Sistema"}]}
+          {:id :active :label "Active" :type :radio :value "T" :options [{:id "T" :value "T" :label "Activo"}
+                                                                         {:id "F" :value "F" :label "Inactivo"}]}
+          ; {:id :fax :label "Fax" :type :textarea :placeholder "Fax..."}
+          ; {:id :password :label "Password" :type :password}
+          ; {:id :imagen :label "Imagen" :type :file}
+          ; {:id :last_login :label "Last Login" :type :textarea :placeholder "Last Login..."}
+          ]
+
  ;; Queries — pickdict dictionary-aware or raw SQL
  ;; :pickdict/list and :pickdict/get auto-resolve T-dictionary translations
- :queries {:list :pickdict/list
+ :queries {:list "select * from users_view"
            :get :pickdict/get}
- 
+
  ;; Available actions
  :actions {:new true :edit true :delete true}
- 
+
  ;; Enable audit trail (tracks who created/modified and when)
  ;; Uncomment to enable:
  ;; :audit? true
- 
+
  ;; Lifecycle hooks for business logic
  ;; Implement in src/pickgen/hooks/users.clj
- :hooks {:after-load :pickgen.hooks.users/after-load
-          :before-save :pickgen.hooks.users/before-save}
+ :hooks {:after-load :contactos.hooks.users/after-load
+         :before-save :contactos.hooks.users/before-save}
  ;; Additional hooks (uncomment as needed):
- ;;   before-load :pickgen.hooks.users/before-load
- ;;   after-save :pickgen.hooks.users/after-save
- ;;   before-delete :pickgen.hooks.users/before-delete
- ;;   after-delete :pickgen.hooks.users/after-delete
- 
+ ;;   before-load :contactos.hooks.users/before-load
+ ;;   after-save :contactos.hooks.users/after-save
+ ;;   before-delete :contactos.hooks.users/before-delete
+ ;;   after-delete :contactos.hooks.users/after-delete
+
  ;; Subgrids (parent-child relationships via Pick/D3 multivalue fields)
  ;; Uncomment if this entity has child records:
  ;; :subgrids [{:entity :related-table
@@ -59,4 +63,4 @@
  ;;             :multivalue-field :related_ids
  ;;             :icon "bi bi-list"
  ;;             :label "Related Records"}]
-}
+ }
