@@ -251,10 +251,9 @@
             a-entries (filter #(= "A" (:type %)) parsed)
             t-entries (filter #(= "T" (:type %)) parsed)
             ;; Build position→field-name map from A-entries
-            ;; A-type POSITION is 1-based from first data column (after id)
-            ;; T-type POSITION is 1-based including id column, so offset by +1
+            ;; Both A-type and T-type positions use the same 1-based scheme (after id)
             pos->field (into {}
-                             (map (fn [a] [(str (inc (Integer/parseInt (:position a))))
+                             (map (fn [a] [(:position a)
                                            (keyword (str/lower-case (:key a)))])
                                   a-entries))
             ;; Group T-entries by child table (deduplicate: one subgrid per child)
@@ -342,6 +341,12 @@
            :hidden-in-grid? true  ;; Hide FK ID in grid, show display name instead
            :foreign-key {:table (:references-table fk)
                          :column (:references-column fk)}}))
+
+      ;; Multivalue ID field (Pick/D3 style — e.g. sibling_ids, car_ids)
+      (re-find #"_ids$" (name column-name))
+      {:id column-name
+       :label (humanize-label column-name)
+       :type :hidden}
 
       ;; Regular field
       :else

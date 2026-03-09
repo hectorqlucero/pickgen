@@ -65,7 +65,10 @@
    Returns: Modified rows vector"
   [rows params]
   (println "[INFO] Loaded" (count rows) "contactos record(s)")
-  (map #(assoc % :imagen (image-link (:imagen %))) rows))
+  ;; Transform file fields to image links
+  (map #(-> %
+            (assoc :imagen (image-link (:imagen %)))
+        ) rows))
 
 (defn before-save
   "Hook executed before saving a record.
@@ -79,15 +82,15 @@
    Args: [params] - Form data to be saved
    Returns: Modified params map OR {:errors {...}} if validation fails"
   [params]
-  (println "[INFO] Saving pickgen...")
+  (println "[INFO] Saving contactos...")
 
   ;; Handle file upload for imagen field
   ;; The system expects :file key, but our field is named :imagen
-  (if-let [imagen-file (:imagen params)]
-    (if (and (map? imagen-file) (:tempfile imagen-file))
+  (if-let [file-data (:imagen params)]
+    (if (and (map? file-data) (:tempfile file-data))
       ;; It's a file upload - move it to :file key so build-form-save finds it
       (-> params
-          (assoc :file imagen-file)
+          (assoc :file file-data)
           (dissoc :imagen))
       ;; It's already a string (existing filename) - keep as is
       params)
