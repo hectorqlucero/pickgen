@@ -1,0 +1,62 @@
+;; AUTO-GENERATED entity configuration for users
+;; Generated: 2026-03-08T17:21:45.025012007
+;; 
+;; This file was scaffolded from the database schema.
+;; Feel free to edit and customize as needed.
+;; 
+
+{:entity :users
+ :title "Users"  ;; Edit this to your preference
+ :table "users"
+ :connection :default
+ :rights ["U" "A" "S"]  ;; User levels: U=User, A=Admin, S=System
+ :mode :parameter-driven
+ :menu-category :Users
+ 
+ ;; Fields auto-detected from database schema
+ :fields [
+          {:id :fax :label "Fax" :type :textarea :placeholder "Fax..."}
+          {:id :email :label "Email" :type :email :placeholder "user@example.com"}
+          {:id :password :label "Password" :type :password}
+          {:id :lastname :label "Lastname" :type :textarea :placeholder "Lastname..."}
+          {:id :phone :label "Phone" :type :text :placeholder "Phone..."}
+          {:id :imagen :label "Imagen" :type :file}
+          {:id :last_login :label "Last Login" :type :textarea :placeholder "Last Login..."}
+          {:id :username :label "Username" :type :textarea :placeholder "Username..."}
+          {:id :level :label "Level" :type :textarea :placeholder "Level..."}
+          {:id :dob :label "Dob" :type :textarea :placeholder "Dob..."}
+          {:id :firstname :label "Firstname" :type :textarea :placeholder "Firstname..."}
+          {:id :active :label "Active" :type :textarea :placeholder "Active..."}
+          {:id :id :label "ID" :type :hidden}
+          {:id :cell :label "Cell" :type :text :placeholder "Cell..."}]
+ 
+ ;; Queries — pickdict dictionary-aware or raw SQL
+ ;; :pickdict/list and :pickdict/get auto-resolve T-dictionary translations
+ :queries {:list :pickdict/list
+           :get :pickdict/get}
+ 
+ ;; Available actions
+ :actions {:new true :edit true :delete true}
+ 
+ ;; Enable audit trail (tracks who created/modified and when)
+ ;; Uncomment to enable:
+ ;; :audit? true
+ 
+ ;; Lifecycle hooks for business logic
+ ;; Implement in src/pickgen/hooks/users.clj
+ :hooks {:after-load :pickgen.hooks.users/after-load
+          :before-save :pickgen.hooks.users/before-save}
+ ;; Additional hooks (uncomment as needed):
+ ;;   before-load :pickgen.hooks.users/before-load
+ ;;   after-save :pickgen.hooks.users/after-save
+ ;;   before-delete :pickgen.hooks.users/before-delete
+ ;;   after-delete :pickgen.hooks.users/after-delete
+ 
+ ;; Subgrids (parent-child relationships via Pick/D3 multivalue fields)
+ ;; Uncomment if this entity has child records:
+ ;; :subgrids [{:entity :related-table
+ ;;             :title "Related Records"
+ ;;             :multivalue-field :related_ids
+ ;;             :icon "bi bi-list"
+ ;;             :label "Related Records"}]
+}

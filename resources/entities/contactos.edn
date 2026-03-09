@@ -1,0 +1,61 @@
+;; AUTO-GENERATED entity configuration for contactos
+;; Generated: 2026-03-08T17:21:44.976883968
+;; 
+;; This file was scaffolded from the database schema.
+;; Feel free to edit and customize as needed.
+;; 
+
+{:entity :contactos
+ :title "Contactos"  ;; Edit this to your preference
+ :table "contactos"
+ :connection :default
+ :rights ["U" "A" "S"]  ;; User levels: U=User, A=Admin, S=System
+ :mode :parameter-driven
+ :menu-category :Contactos
+ 
+ ;; Fields auto-detected from database schema
+ :fields [
+          {:id :id :label "ID" :type :hidden}
+          {:id :name :label "Name" :type :textarea :placeholder "Name..."}
+          {:id :email :label "Email" :type :email :placeholder "user@example.com"}
+          {:id :phone :label "Phone" :type :text :placeholder "Phone..."}
+          {:id :imagen :label "Imagen" :type :file}
+          {:id :sibling_ids :label "Sibling Ids" :type :hidden}
+          {:id :car_ids :label "Car Ids" :type :hidden}]
+ 
+ ;; Queries — pickdict dictionary-aware or raw SQL
+ ;; :pickdict/list and :pickdict/get auto-resolve T-dictionary translations
+ :queries {:list :pickdict/list
+           :get :pickdict/get}
+ 
+ ;; Available actions
+ :actions {:new true :edit true :delete true}
+ 
+ ;; Enable audit trail (tracks who created/modified and when)
+ ;; Uncomment to enable:
+ ;; :audit? true
+ 
+ ;; Lifecycle hooks for business logic
+ ;; Implement in src/pickgen/hooks/pickgen.clj
+ :hooks {:after-load :pickgen.hooks.contactos/after-load
+          :before-save :pickgen.hooks.contactos/before-save}
+ ;; Additional hooks (uncomment as needed):
+ ;;   before-load :pickgen.hooks.contactos/before-load
+ ;;   after-save :pickgen.hooks.contactos/after-save
+ ;;   before-delete :pickgen.hooks.contactos/before-delete
+ ;;   after-delete :pickgen.hooks.contactos/after-delete
+ 
+ ;; Subgrids for related tables (auto-detected from T-dictionaries)
+ :subgrids [
+            {:entity :siblings
+             :title "Siblings"
+             :multivalue-field :sibling_ids
+             :display-fields [:name :age]
+             :icon "bi bi-list-ul"
+             :label "Siblings"}
+            {:entity :cars
+             :title "Cars"
+             :multivalue-field :car_ids
+             :display-fields [:company :model :year]
+             :icon "bi bi-list-ul"
+             :label "Cars"}]}
