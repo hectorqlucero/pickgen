@@ -7,7 +7,7 @@
                  [org.clojure/data.csv "1.1.1"]
                  [org.clojure/data.json "2.5.2"]
                  [org.slf4j/slf4j-simple "2.0.17"]
-                 [org.clojars.hector/pickdict "0.3.0"]
+                 [org.clojars.hector/pickdict "0.3.1"]
                  [compojure "1.7.2"]
                  [hiccup "2.0.0"]
                  [buddy/buddy-hashers "2.0.167"]
